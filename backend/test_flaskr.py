@@ -1,4 +1,5 @@
 import os
+from turtle import title
 import unittest
 import json
 from flask_sqlalchemy import SQLAlchemy
@@ -20,6 +21,20 @@ class TriviaTestCase(unittest.TestCase):
             "postgres", "localhost:5432", self.database_name
         )
         setup_db(self.app, self.database_path)
+        self.new_question = {
+            "question": "Test question",
+            "answer": "Test answer",
+            "difficulty": 5,
+            "category": 4
+        }
+        self.new_question_wrong = {
+            "answer": "Test answer",
+            "category": 4
+        }
+
+        self.search = {
+            "search": "title"
+        }
 
         # binds the app to the current context
         with self.app.app_context():
@@ -81,6 +96,34 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "Resource Not Found")
+
+    def test_create_question(self):
+        res = self.client().post("/questions", json=self.new_question)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(data["success"], True)
+        self.assertTrue(data['created'])
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['total_questions'])
+
+    def test_search_questions(self):
+        res = self.client().post("/questions", json=self.search)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["success"], True)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['total_questions'])
+    
+    def test_422_create_question_unprocessable(self):
+        res = self.client().post("/questions", json=self.new_question_wrong)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data['message'], "unprocessable")
+        self.assertTrue(data['error'])
 
          
 

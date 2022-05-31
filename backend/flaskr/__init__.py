@@ -64,13 +64,6 @@ def create_app(test_config=None):
             'current_category': categories_selection[0].type
         })
 
-    """
-    @TODO:
-    Create an endpoint to DELETE question using a question ID.
-
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page.
-    """
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
@@ -89,8 +82,7 @@ def create_app(test_config=None):
                 'questions': questions,
                 'total_questions': len(questions_selection)
             })  
-        except Exception as e:
-            print(e)
+        except:
             db.session.rollback()
             abort(404)
         finally:
@@ -106,6 +98,47 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     """
+    @app.route('/questions', methods=['POST'])
+    def create_question():
+        body = request.get_json()
+
+        new_question = body.get('question', None)
+        new_answer = body.get('answer', None)
+        new_category = body.get('category', None)
+        new_difficulty = body.get('difficulty', None)
+        search_term = body.get('search', None)
+
+        if new_question is None and search_term is None:
+            abort(422)
+
+        try:
+            if search_term:
+                questions_selection = Question.query.order_by(Question.id).filter(Question.question.ilike("%{}%".format(search_term))).all()
+                questions = paginate_questions(request, questions_selection)
+
+                return jsonify({
+                    'success': True,
+                    'questions': questions,
+                    'total_questions': len(questions_selection)
+                })
+            else:
+                question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
+                question.insert()
+
+                questions_selection = Question.query.order_by(Question.id).all()
+                questions = paginate_questions(request, questions_selection)
+
+                return jsonify({
+                    'success': True,
+                    'created': question.id,
+                    'questions': questions,
+                    'total_questions': len(questions_selection)
+                }), 201
+        except:
+            db.session.rollback()
+            abort(422)
+        finally:
+            db.session.close()
 
     """
     @TODO:
@@ -139,11 +172,6 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
 
-    """
-    @TODO:
-    Create error handlers for all expected errors
-    including 404 and 422.
-    """
     @app.errorhandler(404)
     def not_found(error):
         return (
