@@ -78,8 +78,3 @@ class Category(db.Model):
             'id': self.id,
             'type': self.type
             }
-
-    def get_categories(self):
-        return {
-            self.id: self.type
-        }

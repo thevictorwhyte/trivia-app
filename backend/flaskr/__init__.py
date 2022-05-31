@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 
-from models import setup_db, Question, Category
+from models import setup_db, Question, Category, db
 
 QUESTIONS_PER_PAGE = 10
 
@@ -33,41 +33,25 @@ def create_app(test_config=None):
         )
         return response
 
-    """
-    @TODO:
-    Create an endpoint to handle GET requests
-    for all available categories.
-    """
     @app.route('/categories')
     def retrieve_categories():
         try:
             categories = Category.query.order_by(Category.id).all()
             return jsonify({
+                'categories': {category.id:category.type for category in categories},
                 'success': True,
-                'categories': [category.get_categories() for category in categories],
                 'total_categories': len(categories)
-            })
-        except:
+            }) 
+        except Exception as e:
+            print(e)
             abort(404)
 
 
-
-    """
-    @TODO:
-    Create an endpoint to handle GET requests for questions,
-    including pagination (every 10 questions).
-    This endpoint should return a list of questions,
-    number of total questions, current category, categories.
-
-    TEST: At this point, when you start the application
-    you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
-    Clicking on the page numbers should update the questions.
-    """
     @app.route('/questions')
     def retrieve_questions():
-        selection = Question.query.order_by(Question.id).all()
-        questions = paginate_questions(request, selection)
+        questions_selection = Question.query.order_by(Question.id).all()
+        categories_selection = Category.query.order_by(Category.id).all()
+        questions = paginate_questions(request, questions_selection)
 
         if len(questions) == 0:
             abort(404)
@@ -75,7 +59,9 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'questions': questions,
-            'total_questions': len(selection)
+            'categories': {category.id:category.type for category in categories_selection},
+            'total_questions': len(questions),
+            'current_category': categories_selection[0].type
         })
 
     """
@@ -85,6 +71,30 @@ def create_app(test_config=None):
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
+        try:
+            question = Question.query.filter(Question.id == question_id).one_or_none()
+
+            if question is None:
+                abort(404)
+
+            question.delete()
+            questions_selection = Question.query.order_by(Question.id).all()
+            questions = paginate_questions(request, questions_selection)
+
+            return jsonify({
+                'success': True,
+                'deleted': question_id,
+                'questions': questions,
+                'total_questions': len(questions_selection)
+            })  
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            abort(404)
+        finally:
+            db.session.close()
 
     """
     @TODO:
@@ -140,6 +150,14 @@ def create_app(test_config=None):
             jsonify({"success": False, "error": 404, "message": "Resource Not Found"}),
             404
         )
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return (jsonify({"success": False, "error": 422, "message": "unprocessable"}), 422)
+    
+    @app.errorhandler(400)
+    def bad_request(error):
+        return (jsonify({"success": False, "error": 400, "message": "bad request"}), 400)
 
     return app
 
