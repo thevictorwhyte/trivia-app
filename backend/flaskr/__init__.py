@@ -92,15 +92,14 @@ def create_app(test_config=None):
     def create_question():
         body = request.get_json()
 
-        new_question = body.get('question', None)
-        new_answer = body.get('answer', None)
-        new_category = body.get('category', None)
-        new_difficulty = body.get('difficulty', None)
+        new_question = body.get('question', '')
+        new_answer = body.get('answer', '')
+        new_category = body.get('category', 1)
+        new_difficulty = body.get('difficulty', 1)
         search_term = body.get('searchTerm', None)
 
-        if new_question == '' and new_answer == '' and search_term is None:
+        if (new_question == '' or new_answer == '') and search_term is None:
             abort(422)
-        
 
         try:
             if search_term:

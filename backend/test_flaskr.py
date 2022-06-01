@@ -27,13 +27,13 @@ class TriviaTestCase(unittest.TestCase):
             "difficulty": 5,
             "category": 4
         }
-        self.new_question_wrong = {
+        self.new_question_422 = {
             "answer": "Test answer",
             "category": 4
         }
 
         self.search = {
-            "search": "title"
+            "searchTerm": "title"
         }
 
         self.quiz = {
@@ -123,7 +123,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
     
     def test_422_create_question_unprocessable(self):
-        res = self.client().post("/questions", json=self.new_question_wrong)
+        res = self.client().post("/questions", json=self.new_question_422)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)

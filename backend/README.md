@@ -73,7 +73,7 @@ Documentation of available API endpoints including the URL, request parameters, 
 
 <!-- ### Documentation Example -->
 
-# `GET '/categories'`
+### `GET '/categories'`
 
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
@@ -91,17 +91,17 @@ Documentation of available API endpoints including the URL, request parameters, 
 }
 ```
 
-# `GET '/questions'`
+### `GET '/questions'`
 
 - Fetches a dictionary of questions.
 - Request Arguments: `page` (optional and defaults to 1)
 - Returns:
-  - `success`: can take values `True` or `False` deppending on the successfullnes of the endpoint's execution.
-  - `questions`: contains a list of the fetched questions. Each question is a key/value pairs object containing `id`, `question`, `category` and `diffficulty`.
-  - `total_questions`: the number of questions returned.
-  - `current_category`: list of the categories of the returned questions list.
-  - `categories`: dictionary of categories available in the database.
-- Sample: `curl http://localhost:3000/categories?page=1`
+  - `success`: True or False.
+  - `questions`: List of questions where each question is a key/value pairs object containing `id`, `question`, `category` and `diffficulty` with a max length of 10.
+  - `total_questions`: the total number of quesitons in the database.
+  - `current_category`: string.
+  - `categories`: dictionary of the available categories.
+- Sample: `curl http://localhost:3000/questions?page=1`
 
 ```json
 {
@@ -133,6 +133,85 @@ Documentation of available API endpoints including the URL, request parameters, 
   ],
   "success": true,
   "total_questions": 18
+}
+```
+
+### `DELETE '/questions/<int:question_id>'`
+
+- Removes a particular question from the database.
+- Request Arguments: `question_id` (required)
+- Returns:
+  - `success`: True or False.
+  - `questions`: List of questions where each question is a key/value pairs object containing `id`, `question`, `category` and `diffficulty` with a paginated max length of 10.
+  - `total_questions`: the total number of quesitons in the database.
+  - `deleted`: question_id.
+- Sample: `curl -X DELETE http://localhost:3000/questions/2`
+
+```json
+{
+  "deleted": 2,
+  "questions": [
+    {
+      "answer": "Apollo 13",
+      "category": 5,
+      "difficulty": 4,
+      "id": 2,
+      "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+    },
+    {
+      "answer": "Tom Cruise",
+      "category": 5,
+      "difficulty": 4,
+      "id": 4,
+      "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+    },
+    {...}
+  ],
+  "success": true,
+  "total_questions": 17
+}
+```
+
+### `POST '/questions'`
+
+- Creates a question in the database and also handles the search feature.
+- Request body:
+
+  - `question`: String (required).
+  - `answer`: String (required)
+  - `difficulty`: Number (optional defaults to 1).
+  - `category`: Number (optional defaults to 1 - `Science`).
+  - `searchTerm`: String - if included it will not create a question but rather return search results
+
+- Returns:
+  - `success`: True or False.
+  - `questions`: List of questions where each question is a key/value pairs object containing `id`, `question`, `category` and `diffficulty` with a paginated max length of 10.
+  - `total_questions`: the total number of quesitons in the database.
+  - `created`: id.
+- Sample: `curl -X POST http://localhost:3000/questions -H "Content-Type: application/json" -d '{"question": "When did Nigeria gain her independence", "answer": "1960"}'`
+
+```json
+{
+  "created": 21,
+  "questions": [
+    {
+      "answer": "Apollo 13",
+      "category": 5,
+      "difficulty": 4,
+      "id": 2,
+      "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+    },
+    {
+      "answer": "Tom Cruise",
+      "category": 5,
+      "difficulty": 4,
+      "id": 4,
+      "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+    },
+    {...}
+  ],
+  "success": true,
+  "total_questions": 17
 }
 ```
 
