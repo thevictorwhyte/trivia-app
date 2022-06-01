@@ -36,6 +36,16 @@ class TriviaTestCase(unittest.TestCase):
             "search": "title"
         }
 
+        self.quiz = {
+            "quiz_category": {"id": 1, "type": "Science"},
+            "past_questions": [1, 4, 5, 6, 20]
+        }
+
+        self.quiz_422 = {
+            "quiz_category": {},
+            "past_questions": {}
+        }
+
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -47,10 +57,6 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
     def test_get_categories(self):
         res = self.client().get('/categories')
         data = json.loads(res.data)
@@ -143,10 +149,21 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "Resource Not Found")
 
+    def test_retrieve_quizzes(self):
+        res = self.client().post("/quizzes", json=self.quiz)
+        data = json.loads(res.data)
 
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['question'])
+    
+    def test_422_unprocessable_retrieving_quizzes(self):
+        res = self.client().post("/quizzes", json=self.quiz_422)
+        data = json.loads(res.data)
 
-
-         
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data['message'], "unprocessable")
+        self.assertTrue(data['error'])
 
 
 # Make the tests conveniently executable

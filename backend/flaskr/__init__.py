@@ -60,7 +60,7 @@ def create_app(test_config=None):
             'success': True,
             'questions': questions,
             'categories': {category.id:category.type for category in categories_selection},
-            'total_questions': len(questions),
+            'total_questions': len(questions_selection),
             'current_category': categories_selection[0].type
         })
 
@@ -96,9 +96,9 @@ def create_app(test_config=None):
         new_answer = body.get('answer', None)
         new_category = body.get('category', None)
         new_difficulty = body.get('difficulty', None)
-        search_term = body.get('search', None)
+        search_term = body.get('searchTerm', None)
 
-        if new_question is None and search_term is None:
+        if new_question == '' and new_answer == '' and search_term is None:
             abort(422)
         
 
@@ -153,18 +153,6 @@ def create_app(test_config=None):
             abort(404)
 
 
-
-    """
-    @TODO:
-    Create a POST endpoint to get questions to play the quiz.
-    This endpoint should take category and previous question parameters
-    and return a random questions within the given category,
-    if provided, and that is not one of the previous questions.
-
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not.
-    """
     @app.route("/quizzes", methods=["POST"])
     def retrieve_quizzes():
         body = request.get_json()
@@ -175,10 +163,10 @@ def create_app(test_config=None):
             previous_questions = []
 
         try:
-            if quiz_category is None:
+            if quiz_category is None or quiz_category['id'] == 0:
                 valid_questions_selection = Question.query.all()
             else:
-                valid_questions_selection = Question.query.filter(Question.id != quiz_category['id']).all()
+                valid_questions_selection = Question.query.filter(Question.category == quiz_category['id']).all()
 
             random_question_index = random.randint(0 , len(valid_questions_selection) - 1)
             random_question = valid_questions_selection[random_question_index].format()
