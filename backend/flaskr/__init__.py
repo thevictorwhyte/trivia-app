@@ -88,16 +88,6 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO:
-    Create an endpoint to POST a new question,
-    which will require the question and answer text,
-    category, and difficulty score.
-
-    TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.
-    """
     @app.route('/questions', methods=['POST'])
     def create_question():
         body = request.get_json()
@@ -110,6 +100,7 @@ def create_app(test_config=None):
 
         if new_question is None and search_term is None:
             abort(422)
+        
 
         try:
             if search_term:
@@ -140,25 +131,28 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
+   
+    @app.route('/categories/<int:category_id>/questions')
+    def retrieve_category_questions(category_id):
+        try:
+            category = Category.query.filter(Category.id == category_id).one_or_none()
 
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    """
+            if category is None:
+                abort(404)
 
-    """
-    @TODO:
-    Create a GET endpoint to get questions based on category.
+            questions_selection = Question.query.order_by(Question.id).filter(Question.category == category_id).all()
+            questions = paginate_questions(request, questions_selection)
 
-    TEST: In the "List" tab / main screen, clicking on one of the
-    categories in the left column will cause only questions of that
-    category to be shown.
-    """
+            return jsonify({
+                'success': True,
+                'questions': questions,
+                'total_questions': len(questions_selection),
+                'current_category': category.type
+            })
+        except:
+            abort(404)
+
+
 
     """
     @TODO:
@@ -171,7 +165,42 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+    @app.route("/quizzes", methods=["POST"])
+    def retrieve_quizzes():
+        body = request.get_json()
+        quiz_category = body.get('quiz_category', None)
+        previous_questions = body.get('previous_questions', None)
 
+        if previous_questions is None:
+            previous_questions = []
+
+        try:
+            if quiz_category is None:
+                valid_questions_selection = Question.query.all()
+            else:
+                valid_questions_selection = Question.query.filter(Question.id != quiz_category['id']).all()
+
+            random_question_index = random.randint(0 , len(valid_questions_selection) - 1)
+            random_question = valid_questions_selection[random_question_index].format()
+
+            while True:
+                if random_question['id'] in previous_questions:
+                    random_question_index = random.randint(0 , len(valid_questions_selection) - 1)
+                    random_question = valid_questions_selection[random_question_index].format()
+                else:
+                    break
+
+            return jsonify({
+                'success': True,
+                'question': random_question,
+                'previous_questions': previous_questions
+            })   
+        except:
+            abort(422)
+
+
+
+# ERROR HANDLERS
     @app.errorhandler(404)
     def not_found(error):
         return (
