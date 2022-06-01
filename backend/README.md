@@ -215,6 +215,85 @@ Documentation of available API endpoints including the URL, request parameters, 
 }
 ```
 
+### `GET '/categories/<int:category_id>/questions'`
+
+- Fetches a dictionary of questions in a particular category.
+- Request Arguments: `page` (optional and defaults to 1)
+- Returns:
+  - `success`: True or False.
+  - `questions`: List of questions where each question is a key/value pairs object containing `id`, `question`, `category` and `diffficulty` with a max length of 10.
+  - `total_questions`: the total number of quesitons in the database.
+  - `current_category`: string.
+  - `categories`: dictionary of the available categories.
+- Sample: `curl http://localhost:3000/categories/1/questions`
+
+```json
+{
+  "current_category": "Science",
+  "questions": [
+    {
+      "answer": "Apollo 13",
+      "category": 5,
+      "difficulty": 4,
+      "id": 2,
+      "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+    },
+    {
+      "answer": "Tom Cruise",
+      "category": 5,
+      "difficulty": 4,
+      "id": 4,
+      "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+    },
+    {...}
+  ],
+  "success": true,
+  "total_questions": 18
+}
+```
+
+### `POST '/quizzes'`
+
+- Fetches a random question from the database.
+- Request body: `quiz_category` (optional - if not provided returns a questions from any category)
+- Returns:
+  - `success`: True or False.
+  - `question`: A random question.
+  - `previous_questions`: An arrray of IDs of previous questions.
+- Sample: `curl http://localhost:3000/categories/1/questions`
+
+```json
+{
+  "previous_questions": [1, 4, 11],
+  "question": {
+    "answer": "Apollo 13",
+    "category": 5,
+    "difficulty": 4,
+    "id": 2,
+    "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+  },
+  "success": true
+}
+```
+
+## Errors handling:
+
+The API typical will throw three major error status code `404 - Not found`, `422 - Unprocessable` or `400 - Bad request`. The will return the following key/value pairs JSON content:
+
+- `success`: False.
+- `error`: error code number.
+- `message`: error message string giving a brief description of the kind of error.
+
+Sample:
+
+```JSON
+{
+    "success": False,
+    "error": 404,
+    "message": "Resource Not Found"
+}
+```
+
 ## Testing
 
 Write at least one test for the success and at least one error behavior of each endpoint using the unittest library.
