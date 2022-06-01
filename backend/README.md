@@ -67,17 +67,18 @@ One note before you delve into your tasks: for each endpoint, you are expected t
 8. Create a `POST` endpoint to get questions to play the quiz. This endpoint should take a category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions.
 9. Create error handlers for all expected errors including 400, 404, 422, and 500.
 
-## Documenting your Endpoints
+## Endpoints Documentation
 
-You will need to provide detailed documentation of your API endpoints including the URL, request parameters, and the response body. Use the example below as a reference.
+Documentation of available API endpoints including the URL, request parameters, and the response body
 
-### Documentation Example
+<!-- ### Documentation Example -->
 
-`GET '/api/v1.0/categories'`
+# `GET '/categories'`
 
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
 - Returns: An object with a single key, `categories`, that contains an object of `id: category_string` key: value pairs.
+- Sample: `curl http://localhost:3000/categories`
 
 ```json
 {
@@ -87,6 +88,51 @@ You will need to provide detailed documentation of your API endpoints including 
   "4": "History",
   "5": "Entertainment",
   "6": "Sports"
+}
+```
+
+# `GET '/questions'`
+
+- Fetches a dictionary of questions.
+- Request Arguments: `page` (optional and defaults to 1)
+- Returns:
+  - `success`: can take values `True` or `False` deppending on the successfullnes of the endpoint's execution.
+  - `questions`: contains a list of the fetched questions. Each question is a key/value pairs object containing `id`, `question`, `category` and `diffficulty`.
+  - `total_questions`: the number of questions returned.
+  - `current_category`: list of the categories of the returned questions list.
+  - `categories`: dictionary of categories available in the database.
+- Sample: `curl http://localhost:3000/categories?page=1`
+
+```json
+{
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "current_category": "Science",
+  "questions": [
+    {
+      "answer": "Apollo 13",
+      "category": 5,
+      "difficulty": 4,
+      "id": 2,
+      "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+    },
+    {
+      "answer": "Tom Cruise",
+      "category": 5,
+      "difficulty": 4,
+      "id": 4,
+      "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+    },
+    {...}
+  ],
+  "success": true,
+  "total_questions": 18
 }
 ```
 
