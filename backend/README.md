@@ -288,7 +288,7 @@ Sample:
 
 ```JSON
 {
-    "success": False,
+    "success": false,
     "error": 404,
     "message": "Resource Not Found"
 }
