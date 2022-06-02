@@ -17,6 +17,10 @@ def paginate_questions(request, selection):
     paginated_questions = questions[start:end]
     return paginated_questions
 
+def generate_valid_random_number(selection):
+    num = random.randint(0 , len(selection) - 1)
+    return num
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
@@ -42,10 +46,8 @@ def create_app(test_config=None):
                 'success': True,
                 'total_categories': len(categories)
             }) 
-        except Exception as e:
-            print(e)
+        except:
             abort(404)
-
 
     @app.route('/questions')
     def retrieve_questions():
@@ -130,7 +132,6 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-   
     @app.route('/categories/<int:category_id>/questions')
     def retrieve_category_questions(category_id):
         try:
@@ -155,28 +156,24 @@ def create_app(test_config=None):
     @app.route("/quizzes", methods=["POST"])
     def retrieve_quizzes():
         body = request.get_json()
-        quiz_category = body.get('quiz_category', None)
-        previous_questions = body.get('previous_questions', None)
-
-        if previous_questions is None:
-            previous_questions = []
+        quiz_category = body.get('quiz_category')
+        previous_questions = body.get('previous_questions')
+        random_question = None
 
         try:
             if quiz_category is None or quiz_category['id'] == 0:
-                valid_questions_selection = Question.query.all()
+                valid_questions_selection = [question.format() for question in Question.query.all()]
             else:
-                valid_questions_selection = Question.query.filter(Question.category == quiz_category['id']).all()
-
-            random_question_index = random.randint(0 , len(valid_questions_selection) - 1)
-            random_question = valid_questions_selection[random_question_index].format()
-
-            while True:
-                if random_question['id'] in previous_questions:
-                    random_question_index = random.randint(0 , len(valid_questions_selection) - 1)
-                    random_question = valid_questions_selection[random_question_index].format()
-                else:
-                    break
-
+                valid_questions_selection = [question.format() for question in Question.query.filter(Question.category == quiz_category['id']).all()]
+                        
+            valid_questions = []
+            for question in valid_questions_selection:
+                if question['id'] not in previous_questions:
+                    valid_questions.append(question)
+                
+            if (len(valid_questions) > 0):
+                random_question = random.choice(valid_questions)
+                    
             return jsonify({
                 'success': True,
                 'question': random_question,

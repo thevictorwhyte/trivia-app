@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 from flaskr import create_app, QUESTIONS_PER_PAGE
-from models import setup_db, Question, Category
+from models import setup_db, database_user, Question
 
 
 class TriviaTestCase(unittest.TestCase):
@@ -16,9 +16,9 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "trivia_test"
+        self.database_name = os.getenv("DATABASE_NAME_TEST", "trivia_test")
         self.database_path = "postgresql://{}@{}/{}".format(
-            "postgres", "localhost:5432", self.database_name
+            database_user, "localhost:5432", self.database_name
         )
         setup_db(self.app, self.database_path)
         self.new_question = {
@@ -36,14 +36,9 @@ class TriviaTestCase(unittest.TestCase):
             "searchTerm": "title"
         }
 
-        self.quiz = {
-            "quiz_category": {"id": 1, "type": "Science"},
-            "past_questions": [1, 4, 5, 6, 20]
-        }
-
         self.quiz_422 = {
             "quiz_category": {},
-            "past_questions": {}
+            "previous_questions": {}
         }
 
         # binds the app to the current context
@@ -85,17 +80,19 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Resource Not Found')
 
-    # def test_delete_question(self):
-    #     res = self.client().delete('/questions/2')
-    #     data = json.loads(res.data)
+    def test_delete_question(self):
+        question = Question.query.first()
+        question = question.format()
+        res = self.client().delete(f"/questions/{question['id']}")
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data["success"], True)
-    #     self.assertEqual(data["deleted"], 2)
-    #     self.assertTrue(data["questions"])
-    #     self.assertTrue(data["total_questions"])
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["success"], True)
+        self.assertEqual(data["deleted"], question['id'])
+        self.assertTrue(data["questions"])
+        self.assertTrue(data["total_questions"])
 
-    def test_404_if_question_does_not_exist(self):
+    def test_404_not_found_delete_question(self):
         res = self.client().delete("/questions/1000")
         data = json.loads(res.data)
 
@@ -113,16 +110,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['questions'])
         self.assertTrue(data['total_questions'])
 
-    def test_search_questions(self):
-        res = self.client().post("/questions", json=self.search)
-        data = json.loads(res.data)
-
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data["success"], True)
-        self.assertTrue(data['questions'])
-        self.assertTrue(data['total_questions'])
-    
-    def test_422_create_question_unprocessable(self):
+    def test_422_unprocessable_create_question(self):
         res = self.client().post("/questions", json=self.new_question_422)
         data = json.loads(res.data)
 
@@ -130,7 +118,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], False)
         self.assertEqual(data['message'], "unprocessable")
         self.assertTrue(data['error'])
+    
+    def test_search_questions(self):
+            res = self.client().post("/questions", json=self.search)
+            data = json.loads(res.data)
 
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(data["success"], True)
+            self.assertTrue(data['questions'])
+            self.assertTrue(data['total_questions'])
+    
     def test_retrieve_category_questions(self):
         res = self.client().get("/categories/1/questions")
         data = json.loads(res.data)
@@ -150,11 +147,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["message"], "Resource Not Found")
 
     def test_retrieve_quizzes(self):
-        res = self.client().post("/quizzes", json=self.quiz)
+        quiz = {
+            "quiz_category": {"id": 1, "type": "Science"},
+            "previous_questions": [20, 21]
+        }
+        res = self.client().post("/quizzes", json=quiz)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['question'])
+        self.assertNotEqual(data['question']['id'], 20)
+        self.assertNotEqual(data['question']['id'], 21)
     
     def test_422_unprocessable_retrieving_quizzes(self):
         res = self.client().post("/quizzes", json=self.quiz_422)
